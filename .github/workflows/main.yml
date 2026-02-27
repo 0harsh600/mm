@@ -18,10 +18,8 @@ steps:
       go install github.com/projectdiscovery/httpx/cmd/httpx@latest
       go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
       
-      # Add Go binary path to GitHub actions path
       echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
-      # Install ParamSpider
       git clone https://github.com/devanshbatham/ParamSpider
       cd ParamSpider
       pip install .
@@ -36,44 +34,32 @@ steps:
 
   - name: Enumerate Subdomains
     run: |
-      echo "Finding subdomains for targets..."
       subfinder -dL targets.txt -all -silent > subdomains.txt
-      echo "Total subdomains found: $(wc -l < subdomains.txt)"
 
   - name: Check for Live Hosts
     run: |
-      echo "Checking which subdomains are currently alive..."
       cat subdomains.txt | httpx -silent -ports 80,443,8080 > live_hosts.txt
-      echo "Total live hosts: $(wc -l < live_hosts.txt)"
 
-  - name: Fetch Parameterized URLs (ParamSpider)
+  - name: Fetch Parameterized URLs
     run: |
-      echo "Fetching URLs with parameters using ParamSpider..."
-      # ParamSpider will iterate over the live hosts list
       paramspider -l live_hosts.txt
       
-      # ParamSpider creates a 'results' directory with text files containing the URLs
       if [ -d "results" ]; then
         cat results/*.txt > all_params.txt 2>/dev/null || touch all_params.txt
       else
         touch all_params.txt
       fi
-      echo "Total parameterized URLs found: $(wc -l < all_params.txt)"
 
-  - name: Scan for Open Redirects (Nuclei)
+  - name: Scan for Open Redirects
     run: |
-      echo "Scanning parameterized URLs with Nuclei for Open Redirects..."
-      # Nuclei will automatically handle payload injection and strict validation
       if [ -s all_params.txt ]; then
         nuclei -l all_params.txt -tags redirect -o final_findings.txt
       else
-        echo "No parameterized URLs found to test."
         touch final_findings.txt
       fi
 
-  - name: Display Results
+  - name: Output Results
     run: |
-      echo "=== Open Redirect Scan Results ==="
       cat final_findings.txt
 
   - name: Upload Results Artifact
