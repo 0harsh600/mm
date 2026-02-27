@@ -49,7 +49,7 @@ jobs:
 
       - name: Check for Live Hosts
         run: |
-          cat subdomains.txt | httpx -silent > live_hosts.txt
+          cat subdomains.txt | httpx > live_hosts.txt
 
       - name: Fetch Parameterized URLs
         run: |
