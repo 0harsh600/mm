@@ -1,0 +1,71 @@
+steps:
+  - name: Checkout repository
+    uses: actions/actions/checkout@v4
+
+  - name: Setup Go
+    uses: actions/setup-go@v5
+    with:
+      go-version: '1.21'
+      
+  - name: Setup Python
+    uses: actions/setup-python@v5
+    with:
+      python-version: '3.11'
+
+  - name: Install Bug Bounty Tools
+    run: |
+      go install github.com/tomnomnom/waybackurls@latest
+      go install github.com/tomnomnom/qsreplace@latest
+      go install github.com/projectdiscovery/httpx/cmd/httpx@latest
+      pip install uro
+      
+      # Add Go binary path to GitHub actions path
+      echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+  - name: Verify targets.txt exists
+    run: |
+      if [ ! -f "targets.txt" ]; then
+        echo "Error: targets.txt file is missing in the repository!"
+        exit 1
+      fi
+
+  - name: Fetch Historical URLs
+    run: |
+      echo "Fetching historical URLs for targets..."
+      cat targets.txt | waybackurls > urls.txt
+      echo "Total URLs found: $(wc -l < urls.txt)"
+
+  - name: Filter & Deduplicate URLs
+    run: |
+      echo "Filtering and deduplicating URLs..."
+      cat urls.txt | grep "=" | uro > unique_params.txt
+      echo "Unique parameterized URLs: $(wc -l < unique_params.txt)"
+
+  - name: Inject Open Redirect Payloads
+    run: |
+      echo "Injecting payloads..."
+      # Replaces all parameter values with our testing payload target
+      cat unique_params.txt | qsreplace "http://bugbounty-test.local/redirect-check" > payloads.txt
+      echo "Payloads generated: $(wc -l < payloads.txt)"
+
+  - name: Probe for Open Redirects
+    run: |
+      echo "Probing payloads with httpx..."
+      # httpx will send requests, record redirects, and match if the Location header includes our payload
+      if [ -s payloads.txt ]; then
+        cat payloads.txt | httpx -silent -status-code -location -match-string "http://bugbounty-test.local/redirect-check" -o results.txt
+      else
+        echo "No payloads to test."
+        touch results.txt
+      fi
+
+  - name: Display Results
+    run: |
+      echo "=== Open Redirect Scan Results ==="
+      cat results.txt
+
+  - name: Upload Results Artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: open-redirect-vulnerabilities
+      path: results.txt
