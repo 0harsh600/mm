@@ -1,7 +1,9 @@
+name: Automated Open Redirect Scanner
+on: workflow_dispatch: schedule: - cron: '0 0 * * *'
+jobs: scan: runs-on: ubuntu-latest
 steps:
   - name: Checkout repository
     uses: actions/checkout@v4
-
   - name: Setup Go
     uses: actions/setup-go@v5
     with:
@@ -11,7 +13,6 @@ steps:
     uses: actions/setup-python@v5
     with:
       python-version: '3.11'
-
   - name: Install Bug Bounty Tools
     run: |
       go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
@@ -19,27 +20,22 @@ steps:
       go install github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
       
       echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
       git clone https://github.com/devanshbatham/ParamSpider
       cd ParamSpider
       pip install .
       cd ..
-
   - name: Verify targets.txt exists
     run: |
       if [ ! -f "targets.txt" ]; then
         echo "Error: targets.txt file is missing in the repository!"
         exit 1
       fi
-
   - name: Enumerate Subdomains
     run: |
       subfinder -dL targets.txt -all -silent > subdomains.txt
-
   - name: Check for Live Hosts
     run: |
       cat subdomains.txt | httpx -silent -ports 80,443,8080 > live_hosts.txt
-
   - name: Fetch Parameterized URLs
     run: |
       paramspider -l live_hosts.txt
@@ -49,7 +45,6 @@ steps:
       else
         touch all_params.txt
       fi
-
   - name: Scan for Open Redirects
     run: |
       if [ -s all_params.txt ]; then
@@ -57,11 +52,9 @@ steps:
       else
         touch final_findings.txt
       fi
-
   - name: Output Results
     run: |
       cat final_findings.txt
-
   - name: Upload Results Artifact
     uses: actions/upload-artifact@v4
     with:
