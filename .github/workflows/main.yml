@@ -13,12 +13,12 @@ jobs:
 
       - name: Install Nuclei
         run: |
-          sudo apt update
-          sudo apt install -y wget unzip
-          wget https://github.com/projectdiscovery/nuclei/releases/latest/download/nuclei_$(uname -s)_$(uname -m).zip
+          VERSION=$(curl -s https://api.github.com/repos/projectdiscovery/nuclei/releases/latest | jq -r .tag_name | sed 's/v//')
+          wget "https://github.com/projectdiscovery/nuclei/releases/download/v${VERSION}/nuclei_${VERSION}_linux_amd64.zip"
           unzip nuclei_*.zip
           sudo mv nuclei /usr/local/bin/
           nuclei -version
+
 
       - name: Update Templates
         run: nuclei -update-templates
