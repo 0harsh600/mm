@@ -26,7 +26,6 @@ jobs:
       - name: Run Redirect Scan (LOW RATE)
         run: |
           nuclei -l targets.txt \
-          -tags redirect \
           -o redirect_results.txt
 
       - name: Upload Results
