@@ -25,7 +25,7 @@ jobs:
 
       - name: Run Redirect Scan (LOW RATE)
         run: |
-          nuclei -l targets.txt \
+          nuclei -l targets.txt -severity critical,high \
           -o redirect_results.txt
 
       - name: Upload Results
