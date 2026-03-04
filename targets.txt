@@ -1,1 +1,14 @@
-www.20min.ch
+www.clearme.com
+web-edge.clearme.com
+verified.clearme.com
+scan.clearme.com
+my.clearme.com
+mobile.clearme.com
+ir.clearme.com
+identity.clearme.com
+http://verified.clearme.com/dashboard
+enroll.clearme.com
+concierge.clearme.com
+clearme.com
+authentication.clearme.com
+clearme.atlassian.net
