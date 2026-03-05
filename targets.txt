@@ -1,1 +1,1 @@
-http://api-support.xfinity.com
+https://monitor.cmp.xfinity.com/
